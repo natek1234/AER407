@@ -38,9 +38,9 @@ for traversal in traversals:
 	line_traversal[1] = line_traversal[1] - img_array.shape[0]/2. # adjust y values to center at pole
 
 	# lat = arccos(dr/R) where dr is radial distance from pole and R is total radius, long = arctan(x/y)
-	lat_long = np.array([np.arccos(np.sqrt(np.square(line_traversal[0])+np.square(line_traversal[1])) / R_pix), np.arctan2(line_traversal[0],line_traversal[1]) + np.pi]) 
+	lat_long = np.array([np.arccos(np.sqrt(np.square(line_traversal[0])+np.square(line_traversal[1])) / R_pix), np.arctan2(line_traversal[0],line_traversal[1]) + np.pi])
 	lat_long_deg = np.rad2deg(lat_long) # convert lat and long to degrees
-	
+
 	lat_max = np.max(lat_long_deg[0])
 	lat_min = np.min(lat_long_deg[0])
 	long_max = np.max(lat_long_deg[1])
@@ -58,8 +58,8 @@ for traversal in traversals:
 
 	## DISTANCE CALCULATIONS ##
 
-	# Haversine formula: 
-	# a = sin²(Δφ/2) + cos φ1 ⋅ cos φ2 ⋅ sin²(Δλ/2) 
+	# Haversine formula:
+	# a = sin²(Δφ/2) + cos φ1 ⋅ cos φ2 ⋅ sin²(Δλ/2)
 	# c = 2 ⋅ atan2( √a, √(1−a) )
 	# d = R ⋅ c
 
@@ -76,7 +76,7 @@ for traversal in traversals:
 		d = R * c
 		#d = np.arccos(np.sin(lat_long[0,i])*np.sin(lat_long[0,i+1]) + np.cos(lat_long[0,i])*np.cos(lat_long[0,i+1])*np.cos(d_lambda)) * R # NOTE: cosine method gives same results as Haversine
 		total_d = total_d + d
-	
+
 	print('----------------------------------------------')
 	print('Traversal: ' + traversal)
 	print('Max Lat: ' + str(lat_max) + ' deg')
