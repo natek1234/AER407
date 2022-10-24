@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from itertools import accumulate
 
 import numpy as np
 from scipy.interpolate import splprep, splev
@@ -6,6 +7,13 @@ from scipy.interpolate import splprep, splev
 R_EQUAT = 2440.5  # Equatorial radius (semi-major)
 R_POLAR = 2438.3  # Polar radius (semi-minor)
 R_CIRC = (R_EQUAT + R_POLAR) / 2  # Radius to use for circular calcs
+
+
+def _from_xy_to_latlon(x: float, y: float) -> float:
+    """Convert from x-y to latitude, longitude."""
+    lat_rad = -np.arccos(np.hypot(x, y) / R_CIRC)
+    lon_rad = np.arctan2(y, x)
+    return np.rad2deg(lat_rad), np.rad2deg(lon_rad)
 
 
 @dataclass
@@ -23,6 +31,10 @@ class Location:
                 np.sin(lat_rad),
             ]
         )
+
+    @classmethod
+    def from_xy(cls, x: float, y: float) -> "Location":
+        return Location(*_from_xy_to_latlon(x, y))
 
     def distance_to(self, b: "Location") -> float:
         """Haversine formula for distance on sphere"""
@@ -51,11 +63,23 @@ class Path:
         self.xyzs = np.vstack([p.xyz for p in self.points]).transpose()
         self.sections = len(self.points)
 
+        # Compute distances along path
+        self._dists = np.fromiter(
+            accumulate(
+                (a.distance_to(b) for a, b in zip(self.points, self.points[1:])),
+                initial=0,
+            ),
+            dtype=np.float64,
+        )
+        # Fit function from distance along path to position
+        k = 3 if self.sections > 3 else 1
+        self._tck, _u_orig = splprep(self.xyzs[:2, :], u=self._dists, s=0, k=k)
+
     def total_distance(self):
-        tot_d = 0
-        for i in range(1, self.sections):
-            tot_d += self.points[i - 1].distance_to(self.points[i])
-        return tot_d
+        return self._dists[-1]
+
+    def point_at_dist(self, dist) -> Location:
+        return Location.from_xy(*splev(dist, self._tck))
 
 
 class PathsImage:
@@ -86,11 +110,8 @@ class PathsImage:
         u_new = np.linspace(0, 1, cls.POINTS_PER_PATH)
         points = splev(u_new, tck)
 
-        # Convert from x-y to latitude, longitude
-        lat_rad = -np.arccos(np.hypot(points[0], points[1]) / R_CIRC)
-        lon_rad = np.arctan2(points[1], points[0])
-        lats, lons = np.rad2deg(lat_rad), np.rad2deg(lon_rad)
-        return Path(name, lats, lons)
+        lat, lon = _from_xy_to_latlon(points[0], points[1])
+        return Path(name, lat, lon)
 
     @classmethod
     def get_all_traverse_paths(cls) -> list[Path]:
