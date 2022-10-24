@@ -10,25 +10,52 @@ R_CIRC = (R_EQUAT + R_POLAR) / 2  # Radius to use for circular calcs
 
 @dataclass
 class Location:
-    xyz: np.array
     lat: float
     lon: float
+    xyz: np.array = field(init=False)
+
+    def __post_init__(self):
+        lat_rad, lon_rad = np.deg2rad(self.lat), np.deg2rad(self.lon)
+        self.xyz = R_CIRC * np.array(
+            [
+                np.cos(lat_rad) * np.cos(lon_rad),
+                np.cos(lat_rad) * np.sin(lon_rad),
+                np.sin(lat_rad),
+            ]
+        )
+
+    def distance_to(self, b: "Location") -> float:
+        """Haversine formula for distance on sphere"""
+        lat_1, lon_1 = np.deg2rad(self.lat), np.deg2rad(self.lon)
+        lat_2, lon_2 = np.deg2rad(b.lat), np.deg2rad(b.lon)
+        a = np.sin((lat_2 - lat_1) / 2) ** 2
+        b = np.sin((lon_2 - lon_1) / 2) ** 2
+        c = a + b * np.cos(lat_1) * np.cos(lat_2)
+        return R_CIRC * 2 * np.arctan2(np.sqrt(c), np.sqrt(1 - c))
 
 
 @dataclass
 class Path:
     name: str
-    xyzs: np.array
     lats: np.array
     lons: np.array
 
+    xyzs: np.array = field(init=False)
     points: list[Location] = field(init=False, repr=False)
-    sections = property(lambda self: len(self.points))
+    sections: int = field(init=False)
 
     def __post_init__(self):
         self.points = []
-        for xyz, lat, lon in zip(self.xyzs.T, self.lats, self.lons):
-            self.points.append(Location(xyz, lat, lon))
+        for lat, lon in zip(self.lats, self.lons):
+            self.points.append(Location(lat, lon))
+        self.xyzs = np.vstack([p.xyz for p in self.points]).transpose()
+        self.sections = len(self.points)
+
+    def total_distance(self):
+        tot_d = 0
+        for i in range(1, self.sections):
+            tot_d += self.points[i - 1].distance_to(self.points[i])
+        return tot_d
 
 
 class PathsImage:
@@ -63,9 +90,7 @@ class PathsImage:
         lat_rad = -np.arccos(np.hypot(points[0], points[1]) / R_CIRC)
         lon_rad = np.arctan2(points[1], points[0])
         lats, lons = np.rad2deg(lat_rad), np.rad2deg(lon_rad)
-
-        xyzs = np.array([points[0], points[1], R_CIRC * np.sin(lat_rad)])
-        return Path(name, xyzs, lats, lons)
+        return Path(name, lats, lons)
 
     @classmethod
     def get_all_traverse_paths(cls) -> list[Path]:
@@ -74,10 +99,9 @@ class PathsImage:
     @classmethod
     def get_global_path(cls) -> Path:
         all_paths = cls.get_all_traverse_paths()
-        xyzs = np.hstack([path.xyzs[:, :-1] for path in all_paths])
         lats = np.hstack([path.lats[:-1] for path in all_paths])
         lons = np.hstack([path.lons[:-1] for path in all_paths])
-        return Path(" → ".join(path.name for path in all_paths), xyzs, lats, lons)
+        return Path(" → ".join(path.name for path in all_paths), lats, lons)
 
     PATHS = {
         "Beta": [
