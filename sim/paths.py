@@ -4,12 +4,12 @@ from itertools import accumulate
 import numpy as np
 from scipy.interpolate import splprep, splev
 
-R_EQUAT = 2440.5  # Equatorial radius (semi-major)
-R_POLAR = 2438.3  # Polar radius (semi-minor)
-R_CIRC = (R_EQUAT + R_POLAR) / 2  # Radius to use for circular calcs
+R_EQUAT = 2440.5  # [km], Equatorial radius (semi-major)
+R_POLAR = 2438.3  # [km], Polar radius (semi-minor)
+R_CIRC = (R_EQUAT + R_POLAR) / 2  # [km], Radius to use for circular calcs
 
 
-def _from_xy_to_latlon(x: float, y: float) -> float:
+def _from_xy_to_latlon(x: float, y: float) -> tuple[float, float]:
     """Convert from x-y to latitude, longitude."""
     lat_rad = -np.arccos(np.hypot(x, y) / R_CIRC)
     lon_rad = np.arctan2(y, x)
@@ -44,6 +44,14 @@ class Location:
         b = np.sin((lon_2 - lon_1) / 2) ** 2
         c = a + b * np.cos(lat_1) * np.cos(lat_2)
         return R_CIRC * 2 * np.arctan2(np.sqrt(c), np.sqrt(1 - c))
+
+    @staticmethod
+    def subtract_longitudes(lon_a: float, lon_b: float) -> float:
+        phi = (lon_a - lon_b) % 360
+        phi = (phi + 360) % 360
+        if phi > 180:
+            phi -= 360
+        return phi
 
 
 @dataclass
