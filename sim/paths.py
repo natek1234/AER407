@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 import numpy as np
+from scipy.interpolate import splprep, splev
 
 R_EQUAT = 2440.5  # Equatorial radius (semi-major)
 R_POLAR = 2438.3  # Polar radius (semi-minor)
@@ -37,6 +38,8 @@ class PathsImage:
     X_DIAMETER = 508 - 97
     Y_DIAMETER = 430 - 19
     RADIUS = (X_DIAMETER + Y_DIAMETER) / 4
+    SMOOTH_FACTOR = 300
+    POINTS_PER_PATH = 201
 
     TRAVERSE_PATHS = ["Beta", "Alpha_3", "Alpha_2", "Gam_2", "Delta_2"]
 
@@ -50,6 +53,11 @@ class PathsImage:
         points[1] = -(points[1] - cls.CENTRE[1])
         # Scale from pixels to kilometres
         points = points * (R_CIRC / cls.RADIUS)
+
+        # Smooth out path and interpolate
+        tck, u_orig = splprep(points, s=cls.SMOOTH_FACTOR)
+        u_new = np.linspace(0, 1, cls.POINTS_PER_PATH)
+        points = splev(u_new, tck)
 
         # Convert from x-y to latitude, longitude
         lat_rad = -np.arccos(np.hypot(points[0], points[1]) / R_CIRC)
