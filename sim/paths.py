@@ -4,6 +4,8 @@ from itertools import accumulate
 import numpy as np
 from scipy.interpolate import splprep, splev
 
+from utils import snap_angle_range
+
 R_EQUAT = 2440.5  # [km], Equatorial radius (semi-major)
 R_POLAR = 2438.3  # [km], Polar radius (semi-minor)
 R_CIRC = (R_EQUAT + R_POLAR) / 2  # [km], Radius to use for circular calcs
@@ -47,11 +49,7 @@ class Location:
 
     @staticmethod
     def subtract_longitudes(lon_a: float, lon_b: float) -> float:
-        phi = (lon_a - lon_b) % 360
-        phi = (phi + 360) % 360
-        if phi > 180:
-            phi -= 360
-        return phi
+        return snap_angle_range(lon_a - lon_b)
 
 
 @dataclass
