@@ -23,10 +23,12 @@ sim.t = [0]  # [s]
 sim.pos = []
 sim.dist = []  # [km]
 sim.speed = []  # [m/s]
+sim.bearing = []  # [deg]
 sim.term_lon = []  # [deg]
 sim.phi = []  # [deg]
 sim.surf_temp = []  # [degC]
 sim.sun_elevation = []  # [deg]
+sim.sun_azimuth = []  # [deg]
 
 sim.models = SimpleNamespace()
 sim.models.term = Terminator(sim)
@@ -35,23 +37,27 @@ sim.models.speed = SpeedControl(sim)
 sim.models.surf_temp = SurfaceThermal(sim)
 sim.models.sun = Sun(sim)
 
-with tqdm(total=int(path.total_distance()) + 1, unit="km") as pbar:
+PBAR_FORMAT = (
+    "{l_bar}{bar}| {n:.3f}/{total:.0f} [{elapsed}<{remaining}, {rate_fmt}{postfix}]"
+)
+with tqdm(total=path.total_distance(), unit="km", bar_format=PBAR_FORMAT) as pbar:
     while True:
+
         # Compute state values at current time t_i
         sim.pos.append(sim.models.traverse.pos)
         sim.dist.append(sim.models.traverse.dist)
         sim.speed.append(sim.models.speed.speed)
+        sim.bearing.append(sim.models.traverse.bearing)
         sim.term_lon.append(sim.models.term.longitude)
         sim.phi.append(sim.models.traverse.phi)
         sim.surf_temp.append(sim.models.surf_temp.surface_temp)
         sim.sun_elevation.append(sim.models.sun.elevation)
+        sim.sun_azimuth.append(sim.models.sun.azimuth)
 
         # Exit only when have traversed entire path
         if len(sim.dist) > 2:
             pbar.update(sim.dist[-1] - sim.dist[-2])
-        if sim.dist[-1] >= sim.path.total_distance() or sim.t[-1] > (
-            300 * SECS_PER_DAY
-        ):
+        if sim.dist[-1] >= sim.path.total_distance():
             break
 
         # Propogate to next time-step at t_{i+1}
@@ -66,5 +72,4 @@ sim.t = np.array(sim.t)
 sim.days = sim.t / SECS_PER_DAY
 sim.dist = np.array(sim.dist)
 
-plt.plot(sim.days, sim.sun_elevation)
-plt.show()
+# plt.ion()

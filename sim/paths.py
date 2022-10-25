@@ -47,6 +47,19 @@ class Location:
         c = a + b * np.cos(lat_1) * np.cos(lat_2)
         return R_CIRC * 2 * np.arctan2(np.sqrt(c), np.sqrt(1 - c))
 
+    def bearing_to(self, b: "Location") -> float:
+        """Bearing from North (0 deg is North, 90 deg is East)."""
+        # y = Math.sin(λ2-λ1) * Math.cos(φ2)
+        # x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1)
+        # θ = Math.atan2(y, x)
+        a_lat, b_lat = np.deg2rad(self.lat), np.deg2rad(b.lat)
+        delta_lon = np.deg2rad(b.lon - self.lon)
+        y = np.cos(b_lat) * np.sin(delta_lon)
+        x = (np.cos(a_lat) * np.sin(b_lat)) - (
+            np.sin(a_lat) * np.cos(b_lat) * np.cos(delta_lon)
+        )
+        return np.rad2deg(np.arctan2(y, x))
+
     @staticmethod
     def subtract_longitudes(lon_a: float, lon_b: float) -> float:
         return snap_angle_range(lon_a - lon_b)

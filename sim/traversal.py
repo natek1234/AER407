@@ -20,6 +20,10 @@ class Traversal(Model):
         )
         self.phi = snap_angle_range(90 - self.alpha)
 
+        # Compute which direction we're headed
+        slighty_ahead = self.sim.path.point_at_dist(self.dist + 0.1)
+        self.bearing = self.pos.bearing_to(slighty_ahead)
+
 
 class SpeedControl(Model):
     TEMP_MAX = 50  # [degC]
@@ -33,6 +37,7 @@ class SpeedControl(Model):
         self.speed = 0
 
     def step(self, dt: float):
+        # Simple proportional speed control based off surface temp
         surf_temp = self.sim.models.surf_temp.surface_temp
         if surf_temp > self.TEMP_MAX:
             self.speed = 0

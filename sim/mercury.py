@@ -1,6 +1,6 @@
 import numpy as np
 
-from utils import Model, degC_to_K, K_to_degC
+from utils import Model, degC_to_K, K_to_degC, snap_angle_range
 
 
 class Terminator(Model):
@@ -10,7 +10,7 @@ class Terminator(Model):
 
     def __init__(self, sim):
         super().__init__(sim)
-        self.longitude = (sim.path.points[0].lon - (90 - 86.5))
+        self.longitude = sim.path.points[0].lon - (90 - 86.5)
 
     def step(self, dt: float):
         self.longitude += self.SPEED * dt
@@ -23,7 +23,7 @@ class Sun(Model):
 
     def compute(self):
         self.elevation = max(self.sim.models.traverse.alpha, 0)
-        # self.sim.models.term.longitude
+        self.azimuth = snap_angle_range(90 - self.sim.models.traverse.bearing)
 
     def step(self, dt: float):
         self.compute()
