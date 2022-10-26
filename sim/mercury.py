@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 from utils import Model, degC_to_K, K_to_degC, snap_angle_range
 
@@ -22,8 +23,13 @@ class Sun(Model):
         self.compute()
 
     def compute(self):
-        self.elevation = max(self.sim.models.traverse.alpha, 0)
+        self.elevation = self.sim.models.traverse.alpha
         self.azimuth = snap_angle_range(90 - self.sim.models.traverse.bearing)
+        R = Rotation.from_euler("ZY", [-self.azimuth, -self.elevation], degrees=True)
+        if self.elevation > 0:
+            self.vec = R.apply(np.array([1, 0, 0]))
+        else:
+            self.vec = np.zeros(3)
 
     def step(self, dt: float):
         self.compute()

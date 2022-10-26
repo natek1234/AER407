@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 
 class Model(ABC):
     def __init__(self, sim):
@@ -8,6 +10,15 @@ class Model(ABC):
     @abstractmethod
     def step(self, dt: float):
         pass
+
+
+class Plane:
+    def __init__(self, area: float, normal: np.ndarray):
+        self.area = area
+        self.normal = np.array(normal) / np.linalg.norm(normal)
+
+    def projected_area(self, view_from: np.ndarray) -> float:
+        return max(self.area * np.dot(self.normal, view_from), 0)
 
 
 def degC_to_K(degC: float) -> float:
