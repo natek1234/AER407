@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+SECS_PER_DAY = 24 * 60 * 60  # [s/day]
+
 
 class Model(ABC):
     def __init__(self, sim):

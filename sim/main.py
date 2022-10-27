@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+from utils import SECS_PER_DAY
 from paths import PathsImage
 from mercury import Terminator, Sun, SurfaceThermal
 from traversal import Traversal, SpeedControl
@@ -13,7 +14,6 @@ plt.style.use("ggplot")
 plt.rcParams["figure.autolayout"] = True
 
 DT = 60 * 10  # [s]
-SECS_PER_DAY = 24 * 60 * 60  # [s/day]
 
 path = PathsImage.get_global_path()
 
@@ -59,10 +59,10 @@ with tqdm(total=path.total_distance(), unit="km", bar_format=PBAR_FORMAT) as pba
         sim.power_gen.append(sim.models.power.generated)
 
         # Exit only when have traversed entire path
-        if len(sim.dist) > 2:
-            pbar.update(sim.dist[-1] - sim.dist[-2])
         if sim.dist[-1] >= sim.path.total_distance():
             break
+        if len(sim.dist) > 2:
+            pbar.update(sim.dist[-1] - sim.dist[-2])
 
         # Propogate to next time-step at t_{i+1}
         sim.t.append(sim.t[-1] + DT)
@@ -78,6 +78,5 @@ sim.days = sim.t / SECS_PER_DAY
 sim.dist = np.array(sim.dist)
 
 plt.ion()
-# plt.plot(sim.days, sim.power_gen)
-# plt.plot(sim.days, sim.sun_elevation)
-# plt.plot(sim.days, sim.sun_azimuth)
+plt.plot(sim.days, sim.surf_temp)
+plt.plot(sim.days, sim.power_gen)

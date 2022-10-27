@@ -49,9 +49,6 @@ class Location:
 
     def bearing_to(self, b: "Location") -> float:
         """Bearing from North (0 deg is North, 90 deg is East)."""
-        # y = Math.sin(λ2-λ1) * Math.cos(φ2)
-        # x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1)
-        # θ = Math.atan2(y, x)
         a_lat, b_lat = np.deg2rad(self.lat), np.deg2rad(b.lat)
         delta_lon = np.deg2rad(b.lon - self.lon)
         y = np.cos(b_lat) * np.sin(delta_lon)
@@ -108,7 +105,7 @@ class PathsImage:
     X_DIAMETER = 508 - 97
     Y_DIAMETER = 430 - 19
     RADIUS = (X_DIAMETER + Y_DIAMETER) / 4
-    SMOOTH_FACTOR = 300
+    SMOOTH_FACTOR = 0
     POINTS_PER_PATH = 201
 
     TRAVERSE_PATHS = ["Beta", "Alpha_3", "Alpha_2", "Gam_2", "Delta_2"]
@@ -237,7 +234,6 @@ class PathsImage:
             (273, 307),
             (266, 306),
             (261, 299),
-            (253, 296),
             (250, 303),
             (250, 308),
             (244, 308),

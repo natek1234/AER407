@@ -1,5 +1,5 @@
 from paths import Location
-from utils import Model, snap_angle_range
+from utils import Model, snap_angle_range, SECS_PER_DAY
 
 
 class Traversal(Model):
@@ -26,23 +26,43 @@ class Traversal(Model):
 
 
 class SpeedControl(Model):
-    TEMP_MAX = 50  # [degC]
     MAX_SPEED = 1.6  # [m/s]
 
     TEMP_P_RANGE = 5  # [degC]
-    TEMP_P_MIN = TEMP_MAX - TEMP_P_RANGE
+    TOO_COLD_DISTS = [  # [km]
+        # fmt: off
+        (  500,   650),
+        ( 1700,  1950),
+        ( 4800,  5000),
+        ( 6150,  6400),
+        ( 9100,  9350),
+        ( 9750,  9900),
+        (13700, 14200),
+        # fmt: on
+    ]
 
     def __init__(self, sim):
         super().__init__(sim)
         self.speed = 0
+        self.temp_max = 20
 
     def step(self, dt: float):
-        # Simple proportional speed control based off surface temp
+        # Simple proportional speed control based on surface temp
+        self.temp_max = self.target_temp_max()
+        temp_P_min = self.temp_max - self.TEMP_P_RANGE
         surf_temp = self.sim.models.surf_temp.surface_temp
-        if surf_temp > self.TEMP_MAX:
+        if surf_temp > self.temp_max:
             self.speed = 0
-        elif surf_temp > self.TEMP_P_MIN:
-            gain = 1 - (surf_temp - self.TEMP_P_MIN) / self.TEMP_P_RANGE
+        elif surf_temp > temp_P_min:
+            gain = 1 - (surf_temp - temp_P_min) / self.TEMP_P_RANGE
             self.speed = gain * self.MAX_SPEED
         else:
             self.speed = self.MAX_SPEED
+
+    def target_temp_max(self):
+        d = self.sim.models.traverse.dist
+        for d_start, d_end in self.TOO_COLD_DISTS:
+            start_before = (d_end - d_start) * 2
+            if (d_start - start_before) < d < d_end:
+                return 45
+        return 20
