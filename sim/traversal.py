@@ -64,5 +64,5 @@ class SpeedControl(Model):
         for d_start, d_end in self.TOO_COLD_DISTS:
             start_before = (d_end - d_start) * 2
             if (d_start - start_before) < d < d_end:
-                return 45
-        return 20
+                return 65
+        return 55
