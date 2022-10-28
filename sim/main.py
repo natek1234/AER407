@@ -9,6 +9,7 @@ from paths import PathsImage
 from mercury import Terminator, Sun, SurfaceThermal
 from traversal import Traversal, SpeedControl
 from power import Power
+from thermal import Thermal
 
 plt.style.use("ggplot")
 plt.rcParams["figure.autolayout"] = True
@@ -31,6 +32,7 @@ sim.surf_temp = []  # [degC]
 sim.sun_elevation = []  # [deg]
 sim.sun_azimuth = []  # [deg]
 sim.power_gen = []  # [W]
+sim.heat_sun = []  # [W]
 
 sim.models = SimpleNamespace()
 sim.models.term = Terminator(sim)
@@ -39,6 +41,7 @@ sim.models.speed = SpeedControl(sim)
 sim.models.surf_temp = SurfaceThermal(sim)
 sim.models.sun = Sun(sim)
 sim.models.power = Power(sim)
+sim.models.thermal = Thermal(sim)
 
 PBAR_FORMAT = (
     "{l_bar}{bar}| {n:.3f}/{total:.0f} [{elapsed}<{remaining}, {rate_fmt}{postfix}]"
@@ -57,6 +60,7 @@ with tqdm(total=path.total_distance(), unit="km", bar_format=PBAR_FORMAT) as pba
         sim.sun_elevation.append(sim.models.sun.elevation)
         sim.sun_azimuth.append(sim.models.sun.azimuth)
         sim.power_gen.append(sim.models.power.generated)
+        sim.heat_sun.append(sim.models.thermal.power_sun)
 
         # Exit only when have traversed entire path
         if sim.dist[-1] >= sim.path.total_distance():
@@ -72,6 +76,7 @@ with tqdm(total=path.total_distance(), unit="km", bar_format=PBAR_FORMAT) as pba
         sim.models.traverse.step(DT)
         sim.models.sun.step(DT)
         sim.models.power.step(DT)
+        sim.models.thermal.step(DT)
 
 sim.t = np.array(sim.t)
 sim.days = sim.t / SECS_PER_DAY
