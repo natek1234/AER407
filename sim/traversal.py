@@ -45,6 +45,7 @@ class SpeedControl(Model):
         super().__init__(sim)
         self.speed = 0
         self.temp_max = 20
+        self.t_excess = 0
 
     def step(self, dt: float):
         # Simple proportional speed control based on surface temp
@@ -58,6 +59,7 @@ class SpeedControl(Model):
             self.speed = gain * self.MAX_SPEED
         else:
             self.speed = self.MAX_SPEED
+        self.t_excess = (1 - self.speed / self.MAX_SPEED) * dt
 
     def target_temp_max(self):
         d = self.sim.models.traverse.dist

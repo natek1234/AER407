@@ -4,15 +4,17 @@ from utils import Model, Plane
 
 
 class Power(Model):
-    SOLAR_FLUX = 6278  # [W / m^2], Minimum at aphelion
+    # [W / m^2]
+    MIN_SOLAR_FLUX = 6278  # Minimum at aphelion
+    MAX_SOLAR_FLUX = 13000
+    SOLAR_FLUX = MIN_SOLAR_FLUX
 
-    X_DIM = 0.3
-    Y_DIM = 0.2
-    Z_DIM = 0.2
-
-    GEN_EFFICIENCY = 0.25
+    GEN_EFFICIENCY = 0.2 * 0.8
     SOLAR_PANELS = [
-        Plane((Y_DIM + 0.2) * (Z_DIM + 0.2), [1, 0, 0]),
+        Plane(0.2 * 0.3, [1, 0, 0]),
+        Plane(0.2 * 0.3, [1, 0, 0]),
+        Plane(0.08, [0, 1, 0]),
+        Plane(0.08, [0, -1, 0]),
     ]
 
     def __init__(self, sim):
